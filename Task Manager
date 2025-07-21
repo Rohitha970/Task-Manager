@@ -1,0 +1,193 @@
+import java.util.ArrayList;
+import java.util.Scanner;
+
+public class TaskManagerApp {
+
+    // Terminal color codes
+    public static final String GREEN = "\u001B[32m";
+    public static final String CYAN = "\u001B[36m";
+    public static final String YELLOW = "\u001B[33m";
+    public static final String RED = "\u001B[31m";
+    public static final String RESET = "\u001B[0m";
+
+    // Task model
+    static class Task {
+        private int id;
+        private String title;
+        private String description;
+        private boolean completed;
+
+        public Task(int id, String title, String description) {
+            this.id = id;
+            this.title = title;
+            this.description = description;
+            this.completed = false;
+        }
+
+        public int getId() {
+            return id;
+        }
+
+        public void update(String title, String description, boolean completed) {
+            this.title = title;
+            this.description = description;
+            this.completed = completed;
+        }
+
+        public String toString() {
+            return CYAN + "Task ID: " + id + RESET +
+                   "\nTitle   : " + title +
+                   "\nDesc.   : " + description +
+                   "\nStatus  : " + (completed ? GREEN + "✅ Completed" + RESET : RED + "❌ Pending" + RESET);
+        }
+    }
+
+    static ArrayList<Task> taskList = new ArrayList<>();
+    static int nextId = 1;
+
+    public static void main(String[] args) {
+        Scanner scanner = new Scanner(System.in);
+        boolean running = true;
+
+        printStyled("📝 Welcome to Task Manager Application", CYAN);
+
+        while (running) {
+            printMenu();
+            int choice = getIntInput(scanner, "➡️ Enter your choice: ");
+
+            switch (choice) {
+                case 1: createTask(scanner); break;
+                case 2: viewTasks(); break;
+                case 3: updateTask(scanner); break;
+                case 4: deleteTask(scanner); break;
+                case 5:
+                    printStyled("👋 Exiting the application. Thank you!", YELLOW);
+                    running = false;
+                    break;
+                default:
+                    printStyled("❌ Invalid choice. Try again.", RED);
+            }
+
+            if (running) {
+                System.out.print("\n🔁 Do you want to continue? (yes/no): ");
+                String again = scanner.next().toLowerCase();
+                if (!(again.equals("yes") || again.equals("y"))) {
+                    printStyled("👋 Exiting the application. Thank you!", YELLOW);
+                    break;
+                }
+            }
+        }
+
+        scanner.close();
+    }
+
+    // Menu
+    public static void printMenu() {
+        System.out.println("\n📚 MENU:");
+        System.out.println("1. ➕ Create Task");
+        System.out.println("2. 📄 View Tasks");
+        System.out.println("3. ✏️  Update Task");
+        System.out.println("4. ❌ Delete Task");
+        System.out.println("5. 🚪 Exit");
+    }
+
+    // 1. Create
+    public static void createTask(Scanner scanner) {
+        scanner.nextLine(); // consume newline
+        System.out.print("📌 Enter Task Title: ");
+        String title = scanner.nextLine();
+        System.out.print("📝 Enter Task Description: ");
+        String description = scanner.nextLine();
+
+        Task newTask = new Task(nextId++, title, description);
+        taskList.add(newTask);
+
+        printStyled("✅ Task Created Successfully!", GREEN);
+    }
+
+    // 2. Read
+    public static void viewTasks() {
+        if (taskList.isEmpty()) {
+            printStyled("📭 No tasks available.", RED);
+        } else {
+            printStyled("📋 Listing All Tasks:", YELLOW);
+            for (Task task : taskList) {
+                System.out.println("\n" + task);
+            }
+        }
+    }
+
+    // 3. Update
+    public static void updateTask(Scanner scanner) {
+        if (taskList.isEmpty()) {
+            printStyled("📭 No tasks to update.", RED);
+            return;
+        }
+
+        int id = getIntInput(scanner, "🔍 Enter Task ID to update: ");
+        Task taskToUpdate = findTaskById(id);
+        if (taskToUpdate == null) {
+            printStyled("❗ Task not found!", RED);
+            return;
+        }
+
+        scanner.nextLine(); // consume newline
+        System.out.print("✏️ New Title: ");
+        String title = scanner.nextLine();
+        System.out.print("📝 New Description: ");
+        String desc = scanner.nextLine();
+        System.out.print("✔️ Mark as completed? (yes/no): ");
+        String completed = scanner.nextLine();
+
+        boolean isDone = completed.equalsIgnoreCase("yes") || completed.equalsIgnoreCase("y");
+        taskToUpdate.update(title, desc, isDone);
+
+        printStyled("✅ Task updated successfully!", GREEN);
+    }
+
+    // 4. Delete
+    public static void deleteTask(Scanner scanner) {
+        if (taskList.isEmpty()) {
+            printStyled("📭 No tasks to delete.", RED);
+            return;
+        }
+
+        int id = getIntInput(scanner, "🗑️ Enter Task ID to delete: ");
+        Task task = findTaskById(id);
+        if (task != null) {
+            taskList.remove(task);
+            printStyled("✅ Task deleted successfully.", GREEN);
+        } else {
+            printStyled("❗ Task not found!", RED);
+        }
+    }
+
+    // Helper - Find by ID
+    public static Task findTaskById(int id) {
+        for (Task t : taskList) {
+            if (t.getId() == id) return t;
+        }
+        return null;
+    }
+
+    // Helper - Input integer
+    public static int getIntInput(Scanner scanner, String prompt) {
+        int num = -1;
+        boolean valid = false;
+        while (!valid) {
+            try {
+                System.out.print(prompt);
+                num = Integer.parseInt(scanner.next());
+                valid = true;
+            } catch (NumberFormatException e) {
+                printStyled("❗ Invalid number. Try again.", RED);
+            }
+        }
+        return num;
+    }
+
+    // Print with styling
+    public static void printStyled(String msg, String color) {
+        System.out.println(color + msg + RESET);
+    }
+}
